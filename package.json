@@ -7,12 +7,23 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf node_modules packages/*/node_modules"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "@types/node": "^22.13.4",
+    "@typescript-eslint/eslint-plugin": "^8.24.1",
+    "@typescript-eslint/parser": "^8.24.1",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
     "prettier": "^3.2.5",
-    "ts-node": "^10.9.2"
+    "terser": "^5.37.0",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.4.0",
+    "typescript": "^5.3.3",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.6"
   }
 }

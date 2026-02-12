@@ -1,7 +1,6 @@
 {
-  "name": "@texo/core",
+  "name": "@texo/react",
   "version": "0.0.1",
-  "description": "Streaming Markdown/YAML parser for Texo",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -11,17 +10,12 @@
     "test": "vitest run --passWithNoTests",
     "lint": "eslint \"src/**/*.{ts,tsx}\""
   },
-  "keywords": [
-    "texo",
-    "parser",
-    "streaming",
-    "llm",
-    "ui"
-  ],
-  "author": "Youngjune Kwon",
-  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
   "dependencies": {
-    "yaml": "^2.3.4"
+    "@texo/core": "^0.0.1"
   },
   "publishConfig": {
     "access": "public"

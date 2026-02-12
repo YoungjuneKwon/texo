@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noEmitOnError": true,
+    "baseUrl": ".",
+    "paths": {
+      "@texo/core": ["packages/core/src/index.ts"],
+      "@texo/react": ["packages/react/src/index.ts"],
+      "@texo/standalone": ["packages/standalone/src/index.ts"],
+      "@texo/data-adapter": ["packages/data-adapter/src/index.ts"]
+    }
+  }
+}
