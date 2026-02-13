@@ -137,6 +137,7 @@ export function LabPage(): JSX.Element {
       'Prefer texo-theme preset names first, then override only needed tokens.',
       'For calculator/keypad screens prefer texo-button stylePreset: wide or raised.',
       'For time-series requests use texo-chart line with multi-series, and set xEditable: true when axis changes should be allowed.',
+      'For editable date windows, include startDate/dayStep and optional rangeStartDate/rangeEndDate.',
       'If prompt asks for pie from last-day values, output a second texo-chart pie using each series final value.',
     ],
     [],

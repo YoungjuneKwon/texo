@@ -144,7 +144,7 @@ export const TEXO_STREAM_PRIMER = [
   'Chart protocol:',
   '- For time series use texo-chart with chartType: "line" and 2+ series when requested.',
   '- To allow x-axis switching, set xEditable: true and provide xAxisMode/date options.',
-  '- xAxisMode supports label | index | date; with date mode use startDate and dayStep.',
+  '- xAxisMode supports label | index | date; with date mode use startDate/dayStep and optional rangeStartDate/rangeEndDate.',
   '- For comparison pie charts, create a second texo-chart with chartType: "pie" using each series last value.',
 ].join('\n');
 

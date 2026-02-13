@@ -86,7 +86,17 @@ export const BUILTIN_COMPONENT_CATALOG: CatalogComponent[] = [
       {
         name: 'startDate',
         type: 'YYYY-MM-DD',
-        description: 'Start date when xAxisMode is date.',
+        description: 'Dataset start date when xAxisMode is date.',
+      },
+      {
+        name: 'rangeStartDate',
+        type: 'YYYY-MM-DD',
+        description: 'Visible range start date for line chart.',
+      },
+      {
+        name: 'rangeEndDate',
+        type: 'YYYY-MM-DD',
+        description: 'Visible range end date for line chart.',
       },
       {
         name: 'dayStep',
@@ -95,6 +105,6 @@ export const BUILTIN_COMPONENT_CATALOG: CatalogComponent[] = [
       },
     ],
     example:
-      '::: texo-chart\nchartType: "line"\nxAxisMode: "date"\nxEditable: true\nstartDate: "2026-02-01"\ndayStep: 1\nlabels: ["1", "2", "3"]\nseries:\n  - name: "Sales"\n    values: [12, 18, 16]\n:::',
+      '::: texo-chart\nchartType: "line"\nxAxisMode: "date"\nxEditable: true\nstartDate: "2026-02-01"\nrangeStartDate: "2026-02-05"\nrangeEndDate: "2026-02-20"\ndayStep: 1\nlabels: ["1", "2", "3"]\nseries:\n  - name: "Sales"\n    values: [12, 18, 16]\n:::',
   },
 ];

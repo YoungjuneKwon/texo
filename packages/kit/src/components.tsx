@@ -66,6 +66,27 @@ function parseChartSeries(value: unknown): ChartSeries[] {
     .filter((series) => series.values.length > 0);
 }
 
+function parseISODate(value: string): Date | null {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  parsed.setHours(0, 0, 0, 0);
+  return parsed;
+}
+
+function addDaysISO(value: string, days: number): string {
+  const parsed = parseISODate(value);
+  if (!parsed) {
+    return value;
+  }
+  parsed.setDate(parsed.getDate() + days);
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function TexoStack(props: Record<string, unknown>): React.ReactElement {
   const direction = props.direction === 'row' ? 'row' : 'column';
   const gap = asNumber(props.gap, 10);
@@ -270,21 +291,34 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
     props.xAxisMode === 'index' || props.xAxisMode === 'date' || props.xAxisMode === 'label'
       ? props.xAxisMode
       : 'label';
+  const sourceStartDate = asString(props.startDate, '2026-01-01');
   const [xAxisMode, setXAxisMode] = React.useState<'label' | 'index' | 'date'>(initialMode);
-  const [startDate, setStartDate] = React.useState(asString(props.startDate, '2026-01-01'));
+  const [rangeStartDate, setRangeStartDate] = React.useState(
+    asString(props.rangeStartDate, sourceStartDate),
+  );
+  const [rangeEndDate, setRangeEndDate] = React.useState(
+    asString(props.rangeEndDate, addDaysISO(sourceStartDate, 29)),
+  );
   const [dayStep, setDayStep] = React.useState(Math.max(1, Math.floor(asNumber(props.dayStep, 1))));
 
   React.useEffect(() => {
     if (props.xAxisMode === 'index' || props.xAxisMode === 'date' || props.xAxisMode === 'label') {
       setXAxisMode(props.xAxisMode);
     }
-    if (typeof props.startDate === 'string' && props.startDate.length > 0) {
-      setStartDate(props.startDate);
+    if (typeof props.rangeStartDate === 'string' && props.rangeStartDate.length > 0) {
+      setRangeStartDate(props.rangeStartDate);
+    } else if (typeof props.startDate === 'string' && props.startDate.length > 0) {
+      setRangeStartDate(props.startDate);
+    }
+    if (typeof props.rangeEndDate === 'string' && props.rangeEndDate.length > 0) {
+      setRangeEndDate(props.rangeEndDate);
+    } else if (typeof props.startDate === 'string' && props.startDate.length > 0) {
+      setRangeEndDate(addDaysISO(props.startDate, 29));
     }
     if (props.dayStep !== undefined) {
       setDayStep(Math.max(1, Math.floor(asNumber(props.dayStep, 1))));
     }
-  }, [props.xAxisMode, props.startDate, props.dayStep]);
+  }, [props.xAxisMode, props.startDate, props.rangeStartDate, props.rangeEndDate, props.dayStep]);
 
   const labels = asStringArray(props.labels);
   const sourceSeries = parseChartSeries(props.series);
@@ -375,14 +409,40 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
 
   if (chartType === 'line') {
     const maxLength = Math.max(...series.map((entry) => entry.values.length), 0);
+    const sourceStart = parseISODate(sourceStartDate);
+    const selectedStart = parseISODate(rangeStartDate);
+    const selectedEnd = parseISODate(rangeEndDate);
+    let visibleStartIndex = 0;
+    let visibleEndIndex = Math.max(0, maxLength - 1);
 
-    const chartLabels = Array.from({ length: maxLength }, (_, index) => {
+    if (xAxisMode === 'date' && sourceStart && selectedStart) {
+      const msPerDay = 24 * 60 * 60 * 1000;
+      const startDiffDays = Math.floor(
+        (selectedStart.getTime() - sourceStart.getTime()) / msPerDay,
+      );
+      const endDiffDays = selectedEnd
+        ? Math.floor((selectedEnd.getTime() - sourceStart.getTime()) / msPerDay)
+        : startDiffDays + (maxLength - 1) * dayStep;
+
+      const mappedStart = Math.floor(startDiffDays / dayStep);
+      const mappedEnd = Math.floor(endDiffDays / dayStep);
+      visibleStartIndex = Math.min(Math.max(mappedStart, 0), Math.max(0, maxLength - 1));
+      visibleEndIndex = Math.min(
+        Math.max(mappedEnd, visibleStartIndex),
+        Math.max(0, maxLength - 1),
+      );
+    }
+
+    const visibleLength = Math.max(0, visibleEndIndex - visibleStartIndex + 1);
+
+    const chartLabels = Array.from({ length: visibleLength }, (_, offset) => {
+      const index = visibleStartIndex + offset;
       if (xAxisMode === 'index') {
         return String(index + 1);
       }
       if (xAxisMode === 'date') {
-        const base = new Date(startDate);
-        if (Number.isNaN(base.getTime())) {
+        const base = parseISODate(sourceStartDate);
+        if (!base) {
           return `D${index + 1}`;
         }
         base.setDate(base.getDate() + index * dayStep);
@@ -393,7 +453,12 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
       return labels[index] ?? String(index + 1);
     });
 
-    const allValues = series.flatMap((entry) => entry.values);
+    const slicedSeries = series.map((entry) => ({
+      ...entry,
+      values: entry.values.slice(visibleStartIndex, visibleEndIndex + 1),
+    }));
+
+    const allValues = slicedSeries.flatMap((entry) => entry.values);
     const min = allValues.length > 0 ? Math.min(...allValues) : 0;
     const maxValue = allValues.length > 0 ? Math.max(...allValues) : 1;
     const range = Math.max(maxValue - min, 1);
@@ -407,10 +472,12 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
     const plotHeight = height - top - bottom;
 
     const palette = ['#60a5fa', '#22c55e', '#f59e0b', '#e11d48', '#7c3aed'];
-    const lineSeries = series.map((entry, seriesIndex) => {
+    const lineSeries = slicedSeries.map((entry, seriesIndex) => {
       const points = entry.values.map((value, index) => {
         const x =
-          maxLength > 1 ? left + (index / (maxLength - 1)) * plotWidth : left + plotWidth / 2;
+          visibleLength > 1
+            ? left + (index / (visibleLength - 1)) * plotWidth
+            : left + plotWidth / 2;
         const y = top + ((maxValue - value) / range) * plotHeight;
         return { x, y, value };
       });
@@ -445,7 +512,9 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
       .map((entry) => ({
         label: entry.label,
         x:
-          maxLength > 1 ? left + (entry.index / (maxLength - 1)) * plotWidth : left + plotWidth / 2,
+          visibleLength > 1
+            ? left + (entry.index / (visibleLength - 1)) * plotWidth
+            : left + plotWidth / 2,
       }));
 
     return (
@@ -579,8 +648,24 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
               Start Date
               <input
                 type="date"
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
+                value={rangeStartDate}
+                onChange={(event) => setRangeStartDate(event.target.value)}
+                disabled={xAxisMode !== 'date'}
+                style={{
+                  border: '1px solid var(--texo-theme-line, #334155)',
+                  borderRadius: 'var(--texo-theme-radius, 8px)',
+                  background: 'var(--texo-theme-background, #ffffff)',
+                  color: 'var(--texo-theme-foreground, #0f172a)',
+                  padding: '6px 8px',
+                }}
+              />
+            </label>
+            <label style={{ display: 'grid', gap: 4, fontSize: 12 }}>
+              End Date
+              <input
+                type="date"
+                value={rangeEndDate}
+                onChange={(event) => setRangeEndDate(event.target.value)}
                 disabled={xAxisMode !== 'date'}
                 style={{
                   border: '1px solid var(--texo-theme-line, #334155)',
