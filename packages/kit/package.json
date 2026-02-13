@@ -1,0 +1,19 @@
+{
+  "name": "@texo-ui/kit",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --tsconfig tsconfig.build.json",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint \"src/**/*.{ts,tsx}\""
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
