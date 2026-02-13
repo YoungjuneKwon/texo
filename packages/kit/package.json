@@ -10,6 +10,9 @@
     "test": "vitest run --passWithNoTests",
     "lint": "eslint \"src/**/*.{ts,tsx}\""
   },
+  "dependencies": {
+    "@texo-ui/react": "^0.0.1"
+  },
   "peerDependencies": {
     "react": ">=18"
   },

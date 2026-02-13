@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@texo-ui/core": "^0.0.1",
+    "@texo-ui/kit": "^0.0.1",
     "@texo-ui/data-adapter": "^0.0.1",
     "@texo-ui/react": "^0.0.1",
     "react": "^18.3.1",

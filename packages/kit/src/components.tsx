@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTexoContext } from '@texo-ui/react';
 
 const shellStyle: React.CSSProperties = {
   border: '1px solid #d1d5db',
@@ -71,6 +72,7 @@ export function TexoGrid(props: Record<string, unknown>): React.ReactElement {
 }
 
 export function TexoButton(props: Record<string, unknown>): React.ReactElement {
+  const { dispatch } = useTexoContext();
   const label = asString(props.label, 'Action');
   const action = asString(props.action, 'action');
   const variant =
@@ -85,6 +87,7 @@ export function TexoButton(props: Record<string, unknown>): React.ReactElement {
     <button
       type="button"
       data-action={action}
+      onClick={() => dispatch({ type: action, directive: 'texo-button', value: { label, action } })}
       style={{ borderRadius: 10, padding: '8px 12px', ...styles[variant] }}
     >
       {label}

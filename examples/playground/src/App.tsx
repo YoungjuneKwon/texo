@@ -3,6 +3,7 @@ import { ModeSwitcher } from './components/ModeSwitcher';
 import { CategoryPage } from './pages/CategoryPage';
 import { DemoPage } from './pages/DemoPage';
 import { LandingPage } from './pages/LandingPage';
+import { LabPage } from './pages/LabPage';
 
 export default function App(): JSX.Element {
   return (
@@ -21,6 +22,7 @@ export default function App(): JSX.Element {
         <Route path="/casual/:demoId" element={<DemoPage />} />
         <Route path="/pro/:demoId" element={<DemoPage />} />
         <Route path="/data/:demoId" element={<DemoPage />} />
+        <Route path="/lab" element={<LabPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

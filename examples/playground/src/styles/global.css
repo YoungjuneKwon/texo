@@ -77,7 +77,7 @@ a {
 }
 .category-cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
 }
 .category-card {
@@ -93,6 +93,9 @@ a {
 }
 .category-card.data {
   background: linear-gradient(120deg, #14b8a620, transparent);
+}
+.category-card.lab {
+  background: linear-gradient(120deg, #f59e0b22, transparent);
 }
 .cta {
   width: fit-content;
@@ -193,6 +196,59 @@ a {
     grid-template-columns: 1fr;
   }
   .debug-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lab-page {
+  display: grid;
+  gap: 10px;
+}
+
+.lab-header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.lab-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lab-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #111827;
+  color: var(--text);
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.lab-catalog {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lab-catalog li {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  background: #111827;
+}
+
+.lab-catalog p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 1024px) {
+  .lab-grid {
     grid-template-columns: 1fr;
   }
 }

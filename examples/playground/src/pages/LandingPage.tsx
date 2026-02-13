@@ -20,6 +20,9 @@ export function LandingPage(): JSX.Element {
         <Link to="/data" className="category-card data">
           📊 Data
         </Link>
+        <Link to="/lab" className="category-card lab">
+          🧪 Generative Lab
+        </Link>
       </div>
       <Link to="/casual/tournament" className="cta">
         Try Now

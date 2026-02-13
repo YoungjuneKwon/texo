@@ -4,6 +4,7 @@ const MODES = [
   { id: 'casual', label: 'Casual', icon: '🎮', color: '#ec4899' },
   { id: 'pro', label: 'Pro', icon: '🔧', color: '#2563eb' },
   { id: 'data', label: 'Data', icon: '📊', color: '#14b8a6' },
+  { id: 'lab', label: 'Lab', icon: '🧪', color: '#f59e0b' },
 ] as const;
 
 export function ModeSwitcher(): JSX.Element {

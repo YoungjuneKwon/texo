@@ -5,6 +5,8 @@
     "outDir": "dist",
     "composite": true,
     "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {},
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
