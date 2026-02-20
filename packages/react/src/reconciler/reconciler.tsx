@@ -76,6 +76,29 @@ function mergeTheme(base: ThemeTokens, next: ThemeTokens): ThemeTokens {
   return { ...base, ...next };
 }
 
+function shouldUsePixelUnit(tokenKey: string): boolean {
+  const normalized = tokenKey.toLowerCase();
+  return (
+    normalized === 'radius' ||
+    normalized === 'paddingx' ||
+    normalized === 'paddingy' ||
+    normalized.endsWith('radius') ||
+    normalized.endsWith('padding') ||
+    normalized.endsWith('gap') ||
+    normalized.endsWith('width') ||
+    normalized.endsWith('height') ||
+    normalized.endsWith('size') ||
+    normalized.endsWith('margin')
+  );
+}
+
+function serializeThemeToken(tokenKey: string, value: string | number): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  return shouldUsePixelUnit(tokenKey) ? `${value}px` : String(value);
+}
+
 function parseThemeTokens(attributes: Record<string, unknown>): ThemeTokens {
   const reserved = new Set([
     'scope',
@@ -96,9 +119,9 @@ function parseThemeTokens(attributes: Record<string, unknown>): ThemeTokens {
   if (isObject(attributes.tokens)) {
     Object.entries(attributes.tokens).forEach(([key, value]) => {
       if (typeof value === 'string' && value.length > 0) {
-        tokens[key] = value;
+        tokens[key] = serializeThemeToken(key, value);
       } else if (typeof value === 'number' && Number.isFinite(value)) {
-        tokens[key] = key === 'radius' ? `${value}px` : String(value);
+        tokens[key] = serializeThemeToken(key, value);
       }
     });
   }
@@ -108,9 +131,9 @@ function parseThemeTokens(attributes: Record<string, unknown>): ThemeTokens {
       return;
     }
     if (typeof value === 'string' && value.length > 0) {
-      tokens[key] = value;
+      tokens[key] = serializeThemeToken(key, value);
     } else if (typeof value === 'number' && Number.isFinite(value)) {
-      tokens[key] = key === 'radius' ? `${value}px` : String(value);
+      tokens[key] = serializeThemeToken(key, value);
     }
   });
 
@@ -246,10 +269,11 @@ function renderGridEntry(entry: GridEntry): React.ReactNode {
       style={{
         ...themeToStyle(entry.theme),
         display: 'grid',
-        gap: 12,
+        gap: 'var(--texo-theme-grid-gap, 12px)',
         gridTemplateColumns: `repeat(${entry.columns}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${entry.rows}, minmax(64px, auto))`,
-        margin: '0.75em 0',
+        gridTemplateRows: `repeat(${entry.rows}, minmax(var(--texo-theme-grid-row-min-height, 64px), auto))`,
+        margin: 'var(--texo-theme-grid-margin, 0.75em 0)',
+        width: '100%',
       }}
     >
       {entry.cells.map((cell) => {
@@ -261,7 +285,8 @@ function renderGridEntry(entry: GridEntry): React.ReactNode {
             style={{
               gridColumn: `${cell.column} / span ${cell.columnSpan}`,
               gridRow: `${cell.row} / span ${cell.rowSpan}`,
-              minHeight: 64,
+              minHeight: 'var(--texo-theme-grid-cell-min-height, 64px)',
+              minWidth: 0,
             }}
           >
             {mounted}

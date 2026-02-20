@@ -1,12 +1,14 @@
 import React from 'react';
-import { useTexoContext } from '@texo-ui/react';
+import { TexoContext } from '@texo-ui/react';
 
 const shellStyle: React.CSSProperties = {
-  border: '1px solid var(--texo-theme-line, #d1d5db)',
+  border: 'var(--texo-theme-border, 1px solid var(--texo-theme-line, #d1d5db))',
   borderRadius: 'var(--texo-theme-radius, 12px)',
   background: 'var(--texo-theme-background, #ffffff)',
   color: 'var(--texo-theme-foreground, #0f172a)',
-  padding: 12,
+  paddingBlock: 'var(--texo-theme-paddingY, 10px)',
+  paddingInline: 'var(--texo-theme-paddingX, 15px)',
+  boxShadow: 'var(--texo-theme-shadow, 0 4px 12px rgba(15, 23, 42, 0.10))',
 };
 
 function asNumber(value: unknown, fallback: number): number {
@@ -111,7 +113,7 @@ export function TexoGrid(props: Record<string, unknown>): React.ReactElement {
       <div
         style={{
           display: 'grid',
-          gap: 8,
+          gap: 'var(--texo-theme-grid-gap, 8px)',
           gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
         }}
       >
@@ -122,7 +124,7 @@ export function TexoGrid(props: Record<string, unknown>): React.ReactElement {
               border: '1px dashed #cbd5e1',
               borderRadius: 'var(--texo-theme-radius, 8px)',
               minHeight: 48,
-              padding: 8,
+              padding: 'var(--texo-theme-cell-padding, 8px)',
               color: 'var(--texo-theme-foreground, #0f172a)',
             }}
           >
@@ -135,7 +137,7 @@ export function TexoGrid(props: Record<string, unknown>): React.ReactElement {
 }
 
 export function TexoButton(props: Record<string, unknown>): React.ReactElement {
-  const { dispatch } = useTexoContext();
+  const texoContext = React.useContext(TexoContext);
   const label = asString(props.label, 'Action');
   const action = asString(props.action, 'action');
   const stylePreset =
@@ -186,11 +188,15 @@ export function TexoButton(props: Record<string, unknown>): React.ReactElement {
     <button
       type="button"
       data-action={action}
-      onClick={() => dispatch({ type: action, directive: 'texo-button', value: { label, action } })}
+      onClick={() =>
+        texoContext?.dispatch({ type: action, directive: 'texo-button', value: { label, action } })
+      }
       style={{
         borderRadius: 'var(--texo-theme-radius, 10px)',
         padding: '8px 12px',
         width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
         minHeight: 48,
         display: 'inline-flex',
         alignItems: 'center',
@@ -214,7 +220,7 @@ export function TexoInput(props: Record<string, unknown>): React.ReactElement {
   const placeholder = asString(props.placeholder);
 
   return (
-    <label style={{ display: 'grid', gap: 6 }}>
+    <label style={{ display: 'grid', gap: 6, minWidth: 0, width: '100%' }}>
       <span style={{ fontSize: 13, color: 'var(--texo-theme-foreground, #374151)' }}>{label}</span>
       <input
         name={name}
@@ -226,6 +232,10 @@ export function TexoInput(props: Record<string, unknown>): React.ReactElement {
           padding: '8px 10px',
           background: 'var(--texo-theme-background, #ffffff)',
           color: 'var(--texo-theme-foreground, #0f172a)',
+          width: '100%',
+          maxWidth: '100%',
+          minWidth: 0,
+          boxSizing: 'border-box',
         }}
       />
     </label>
@@ -622,11 +632,11 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
             style={{
               marginTop: 10,
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
               gap: 8,
             }}
           >
-            <label style={{ display: 'grid', gap: 4, fontSize: 12 }}>
+            <label style={{ display: 'grid', gap: 4, fontSize: 12, minWidth: 0 }}>
               X Axis
               <select
                 value={xAxisMode}
@@ -637,6 +647,9 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
                   background: 'var(--texo-theme-background, #ffffff)',
                   color: 'var(--texo-theme-foreground, #0f172a)',
                   padding: '6px 8px',
+                  width: '100%',
+                  minWidth: 0,
+                  boxSizing: 'border-box',
                 }}
               >
                 <option value="label">Label</option>
@@ -644,7 +657,7 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
                 <option value="date">Date</option>
               </select>
             </label>
-            <label style={{ display: 'grid', gap: 4, fontSize: 12 }}>
+            <label style={{ display: 'grid', gap: 4, fontSize: 12, minWidth: 0 }}>
               Start Date
               <input
                 type="date"
@@ -657,10 +670,13 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
                   background: 'var(--texo-theme-background, #ffffff)',
                   color: 'var(--texo-theme-foreground, #0f172a)',
                   padding: '6px 8px',
+                  width: '100%',
+                  minWidth: 0,
+                  boxSizing: 'border-box',
                 }}
               />
             </label>
-            <label style={{ display: 'grid', gap: 4, fontSize: 12 }}>
+            <label style={{ display: 'grid', gap: 4, fontSize: 12, minWidth: 0 }}>
               End Date
               <input
                 type="date"
@@ -673,10 +689,13 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
                   background: 'var(--texo-theme-background, #ffffff)',
                   color: 'var(--texo-theme-foreground, #0f172a)',
                   padding: '6px 8px',
+                  width: '100%',
+                  minWidth: 0,
+                  boxSizing: 'border-box',
                 }}
               />
             </label>
-            <label style={{ display: 'grid', gap: 4, fontSize: 12 }}>
+            <label style={{ display: 'grid', gap: 4, fontSize: 12, minWidth: 0 }}>
               Day Step
               <input
                 type="number"
@@ -693,6 +712,9 @@ export function TexoChart(props: Record<string, unknown>): React.ReactElement {
                   background: 'var(--texo-theme-background, #ffffff)',
                   color: 'var(--texo-theme-foreground, #0f172a)',
                   padding: '6px 8px',
+                  width: '100%',
+                  minWidth: 0,
+                  boxSizing: 'border-box',
                 }}
               />
             </label>

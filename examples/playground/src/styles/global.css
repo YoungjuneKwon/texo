@@ -280,6 +280,20 @@ a {
   margin-bottom: 8px;
 }
 
+.lab-stream-editor {
+  min-height: 300px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  margin-bottom: 0;
+}
+
+.lab-stream-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
 .lab-cancel {
   border: 1px solid var(--line);
   border-radius: 10px;

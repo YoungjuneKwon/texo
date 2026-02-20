@@ -79,6 +79,8 @@ export function LabPage(): JSX.Element {
   const [baseUrl, setBaseUrl] = useState(initialPrefs?.baseUrl ?? '');
   const [prompt, setPrompt] = useState('Create a compact analytics dashboard with a filter form.');
   const [streamTextValue, setStreamTextValue] = useState('');
+  const [editableStreamText, setEditableStreamText] = useState('');
+  const [renderStreamText, setRenderStreamText] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
   const [actions, setActions] = useState<TexoAction[]>([]);
   const [recoveryEvents, setRecoveryEvents] = useState<RecoveryEvent[]>([]);
@@ -133,7 +135,7 @@ export function LabPage(): JSX.Element {
       'When using texo-grid, always declare rows/columns and explicit cells with unique id values.',
       'For cell coordinates, prefer 1-based row/column values.',
       'Place components into grid cells with optional mount field instead of nesting as grid children.',
-      'Support theming with texo-theme using scope: global/local and token keys (background, foreground, accent, line, radius).',
+      'Support theming with texo-theme using scope: global/local and token keys (background, foreground, accent, line, radius, border, paddingY, paddingX, shadow).',
       'Prefer texo-theme preset names first, then override only needed tokens.',
       'For calculator/keypad screens prefer texo-button stylePreset: wide or raised.',
       'For time-series requests use texo-chart line with multi-series, and set xEditable: true when axis changes should be allowed.',
@@ -220,6 +222,8 @@ export function LabPage(): JSX.Element {
     setActions([]);
     setRecoveryEvents([]);
     setStreamTextValue('');
+    setEditableStreamText('');
+    setRenderStreamText('');
     setIsGenerating(true);
 
     try {
@@ -238,6 +242,8 @@ export function LabPage(): JSX.Element {
         extraRules: sharedRules,
         onText: (chunk) => {
           setStreamTextValue((prev) => prev + chunk);
+          setEditableStreamText((prev) => prev + chunk);
+          setRenderStreamText((prev) => prev + chunk);
         },
       });
     } catch (error) {
@@ -254,6 +260,17 @@ export function LabPage(): JSX.Element {
       }
       setIsGenerating(false);
     }
+  };
+
+  const retryRenderFromEditableStream = (): void => {
+    setErrors([]);
+    setActions([]);
+    setRecoveryEvents([]);
+    setRenderStreamText(editableStreamText);
+  };
+
+  const restoreEditableStreamFromLatestOutput = (): void => {
+    setEditableStreamText(streamTextValue);
   };
 
   return (
@@ -336,7 +353,7 @@ export function LabPage(): JSX.Element {
         <article className="panel lab-render-panel">
           <h3>Rendered UI</h3>
           <TexoRenderer
-            content={streamTextValue}
+            content={renderStreamText}
             registry={registry}
             trimLeadingTextBeforeDirective
             renderDirectivesOnly
@@ -349,7 +366,34 @@ export function LabPage(): JSX.Element {
       <div className="lab-details">
         <details className="panel lab-detail">
           <summary>Texo Stream</summary>
-          <pre className="chat-box">{streamTextValue || 'LLM texo stream appears here.'}</pre>
+          <p className="muted">
+            Edit the stream and retry UI rendering without re-calling the model.
+          </p>
+          <textarea
+            value={editableStreamText}
+            onChange={(event) => setEditableStreamText(event.target.value)}
+            className="lab-input lab-stream-editor"
+            rows={16}
+            placeholder="LLM texo stream appears here."
+          />
+          <div className="lab-stream-actions">
+            <button
+              type="button"
+              className="cta"
+              onClick={retryRenderFromEditableStream}
+              disabled={isGenerating || editableStreamText.trim().length === 0}
+            >
+              Retry UI from Stream
+            </button>
+            <button
+              type="button"
+              className="lab-cancel"
+              onClick={restoreEditableStreamFromLatestOutput}
+              disabled={isGenerating || streamTextValue.length === 0}
+            >
+              Reset to Latest Output
+            </button>
+          </div>
         </details>
 
         <details className="panel lab-detail">

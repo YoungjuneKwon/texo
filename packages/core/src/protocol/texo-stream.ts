@@ -137,7 +137,7 @@ export const TEXO_STREAM_PRIMER = [
   '- Global theme: ::: texo-theme then scope: "global" and token values.',
   '- Local theme: ::: texo-theme then scope: "local" with target mount/grid.',
   `- Prefer theme preset via preset: one of [${THEME_PRESET_NAMES}].`,
-  '- Theme tokens can include background, foreground, accent, line, radius and custom keys.',
+  '- Theme tokens can include background, foreground, accent, line, radius, border, paddingY, paddingX, shadow and custom keys.',
   'Button style protocol:',
   `- texo-button can set stylePreset: one of [${BUTTON_PRESET_NAMES}].`,
   '- For calculator/keypad UIs prefer stylePreset: "wide" or "raised" for stable touch targets.',
