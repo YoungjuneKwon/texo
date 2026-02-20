@@ -500,6 +500,14 @@ export function LabPage(): JSX.Element {
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(event) => {
+              if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                event.preventDefault();
+                if (!isGenerating) {
+                  void run();
+                }
+              }
+            }}
             className="lab-input"
             rows={5}
           />
