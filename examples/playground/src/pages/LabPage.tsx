@@ -16,6 +16,7 @@ import {
   resolveProviderModels,
   type PlannerProviderId,
 } from '../utils/planner-providers';
+import { scenariosByCategory } from '../scenarios';
 
 const LAB_PREFS_KEY = 'texo.lab.preferences.v1';
 const LAB_SPLIT_WIDTH_KEY = 'texo.lab.split-width.v1';
@@ -33,6 +34,8 @@ interface ProviderModelOption {
   providerLabel: string;
   model: string;
 }
+
+type LabBottomTabId = 'stream' | 'examples' | 'system-prompt' | 'catalog' | 'log';
 
 function readLabPreferences(): LabPreferences | null {
   if (typeof globalThis.localStorage === 'undefined') {
@@ -127,6 +130,7 @@ export function LabPage(): JSX.Element {
   const [isResizingPanels, setIsResizingPanels] = useState(false);
   const [mainRowHeight, setMainRowHeight] = useState<number | null>(initialSplitHeight);
   const [isResizingHeight, setIsResizingHeight] = useState(false);
+  const [activeBottomTab, setActiveBottomTab] = useState<LabBottomTabId>('stream');
   const [modelOptionsByProvider, setModelOptionsByProvider] = useState<
     Record<PlannerProviderId, string[]>
   >({
@@ -137,6 +141,7 @@ export function LabPage(): JSX.Element {
   });
 
   const provider = plannerProviders[providerId];
+  const casualExamples = useMemo(() => scenariosByCategory('casual'), []);
 
   const providerModelOptions = useMemo<ProviderModelOption[]>(() => {
     const byProvider = { ...modelOptionsByProvider };
@@ -547,62 +552,115 @@ export function LabPage(): JSX.Element {
         onPointerDown={startVerticalResize}
       />
 
-      <div className="lab-details">
-        <details className="panel lab-detail">
-          <summary>Texo Stream</summary>
-          <p className="muted">
-            Edit the stream and retry UI rendering without re-calling the model.
-          </p>
-          <textarea
-            value={editableStreamText}
-            onChange={(event) => setEditableStreamText(event.target.value)}
-            className="lab-input lab-stream-editor"
-            rows={16}
-            placeholder="LLM texo stream appears here."
-          />
-          <div className="lab-stream-actions">
-            <button
-              type="button"
-              className="cta"
-              onClick={retryRenderFromEditableStream}
-              disabled={isGenerating || editableStreamText.trim().length === 0}
-            >
-              Retry UI from Stream
-            </button>
-            <button
-              type="button"
-              className="lab-cancel"
-              onClick={restoreEditableStreamFromLatestOutput}
-              disabled={isGenerating || streamTextValue.length === 0}
-            >
-              Reset to Latest Output
-            </button>
-          </div>
-        </details>
+      <div className="panel lab-bottom-tabs">
+        <nav className="lab-tab-strip" aria-label="Lab bottom panel tabs">
+          <button
+            type="button"
+            className={`lab-tab${activeBottomTab === 'stream' ? ' active' : ''}`}
+            onClick={() => setActiveBottomTab('stream')}
+          >
+            Texo Stream
+          </button>
+          <button
+            type="button"
+            className={`lab-tab${activeBottomTab === 'examples' ? ' active' : ''}`}
+            onClick={() => setActiveBottomTab('examples')}
+          >
+            Examples
+          </button>
+          <button
+            type="button"
+            className={`lab-tab${activeBottomTab === 'system-prompt' ? ' active' : ''}`}
+            onClick={() => setActiveBottomTab('system-prompt')}
+          >
+            Texo System Prompt
+          </button>
+          <button
+            type="button"
+            className={`lab-tab${activeBottomTab === 'catalog' ? ' active' : ''}`}
+            onClick={() => setActiveBottomTab('catalog')}
+          >
+            Built-in Catalog
+          </button>
+          <button
+            type="button"
+            className={`lab-tab${activeBottomTab === 'log' ? ' active' : ''}`}
+            onClick={() => setActiveBottomTab('log')}
+          >
+            Interaction/Recovery Log
+          </button>
+        </nav>
 
-        <details className="panel lab-detail">
-          <summary>Texo System Prompt</summary>
-          <pre className="chat-box">{systemPromptPreview}</pre>
-        </details>
+        <div className="lab-tab-panel">
+          {activeBottomTab === 'stream' ? (
+            <>
+              <textarea
+                value={editableStreamText}
+                onChange={(event) => setEditableStreamText(event.target.value)}
+                className="lab-input lab-stream-editor"
+                rows={16}
+                placeholder="Edit the stream and retry UI rendering without re-calling the model."
+              />
+              <div className="lab-stream-actions">
+                <button
+                  type="button"
+                  className="cta"
+                  onClick={retryRenderFromEditableStream}
+                  disabled={isGenerating || editableStreamText.trim().length === 0}
+                >
+                  Retry UI from Stream
+                </button>
+                <button
+                  type="button"
+                  className="lab-cancel"
+                  onClick={restoreEditableStreamFromLatestOutput}
+                  disabled={isGenerating || streamTextValue.length === 0}
+                >
+                  Reset to Latest Output
+                </button>
+              </div>
+            </>
+          ) : null}
 
-        <details className="panel lab-detail">
-          <summary>Built-in Catalog</summary>
-          <ul className="lab-catalog">
-            {BUILTIN_COMPONENT_CATALOG.map((item: CatalogComponent) => (
-              <li key={item.name}>
-                <strong>{item.name}</strong>
-                <p>{item.summary}</p>
-              </li>
-            ))}
-          </ul>
-        </details>
+          {activeBottomTab === 'examples' ? (
+            <div className="lab-example-grid">
+              {casualExamples.map((scenario) => (
+                <button
+                  key={scenario.id}
+                  type="button"
+                  className="lab-example-button"
+                  onClick={() => {
+                    setPrompt(scenario.systemPrompt);
+                    setActiveBottomTab('stream');
+                  }}
+                  disabled={isGenerating}
+                >
+                  <strong>{scenario.name}</strong>
+                  <span>{scenario.systemPrompt}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
 
-        <details className="panel lab-detail">
-          <summary>Interaction/Recovery Log</summary>
-          <pre className="chat-box">
-            {JSON.stringify({ actions, recoveryEvents }, null, 2) || 'No events yet.'}
-          </pre>
-        </details>
+          {activeBottomTab === 'system-prompt' ? (
+            <pre className="chat-box">{systemPromptPreview}</pre>
+          ) : null}
+
+          {activeBottomTab === 'catalog' ? (
+            <ul className="lab-catalog">
+              {BUILTIN_COMPONENT_CATALOG.map((item: CatalogComponent) => (
+                <li key={item.name}>
+                  <strong>{item.name}</strong>
+                  <p>{item.summary}</p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {activeBottomTab === 'log' ? (
+            <pre className="chat-box">{JSON.stringify({ actions, recoveryEvents }, null, 2)}</pre>
+          ) : null}
+        </div>
       </div>
     </section>
   );

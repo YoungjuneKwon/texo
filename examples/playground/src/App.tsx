@@ -16,10 +16,8 @@ export default function App(): JSX.Element {
       </header>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/casual" element={<CategoryPage />} />
         <Route path="/pro" element={<CategoryPage />} />
         <Route path="/data" element={<CategoryPage />} />
-        <Route path="/casual/:demoId" element={<DemoPage />} />
         <Route path="/pro/:demoId" element={<DemoPage />} />
         <Route path="/data/:demoId" element={<DemoPage />} />
         <Route path="/lab" element={<LabPage />} />

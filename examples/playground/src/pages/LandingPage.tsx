@@ -5,15 +5,12 @@ export function LandingPage(): JSX.Element {
     <section className="landing">
       <header>
         <h1>Texo Playground</h1>
-        <p>Stream-first generative UI demos across Casual, Pro, and Data scenarios.</p>
+        <p>Stream-first generative UI demos with a lab-first workflow.</p>
       </header>
       <div className="architecture">
         <pre>{`LLM Stream -> @texo-ui/core Parser -> AST -> @texo-ui/react Renderer -> Interactive UI`}</pre>
       </div>
       <div className="category-cards">
-        <Link to="/casual" className="category-card casual">
-          🎮 Casual
-        </Link>
         <Link to="/pro" className="category-card pro">
           🔧 Pro
         </Link>
@@ -24,7 +21,7 @@ export function LandingPage(): JSX.Element {
           🧪 Generative Lab
         </Link>
       </div>
-      <Link to="/casual/tournament" className="cta">
+      <Link to="/lab" className="cta">
         Try Now
       </Link>
     </section>

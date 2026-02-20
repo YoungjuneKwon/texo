@@ -264,6 +264,10 @@ a {
   overflow: auto;
 }
 
+.lab-render-content {
+  padding: 5px;
+}
+
 .lab-height-divider {
   border: 0;
   padding: 0;
@@ -280,19 +284,61 @@ a {
   cursor: row-resize;
 }
 
-.lab-details {
-  display: grid;
-  gap: 10px;
+.lab-bottom-tabs {
+  padding: 0;
+  overflow: hidden;
 }
 
-.lab-detail summary {
-  cursor: pointer;
+.lab-tab-strip {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  background: #0c1324;
+  overflow-x: auto;
+}
+
+.lab-tab {
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
   font-weight: 600;
-  margin-bottom: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.lab-detail[open] summary {
-  margin-bottom: 10px;
+.lab-tab.active {
+  color: var(--text);
+  background: #111827;
+}
+
+.lab-tab-panel {
+  padding: 12px;
+}
+
+.lab-example-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.lab-example-button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #111827;
+  color: var(--text);
+  text-align: left;
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.lab-example-button span {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .lab-input {

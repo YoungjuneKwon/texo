@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 
 const MODES = [
-  { id: 'casual', label: 'Casual', color: '#ec4899', disabled: false },
   { id: 'lab', label: 'Lab', color: '#f59e0b', disabled: false },
   { id: 'pro', label: 'Pro (TBD)', color: '#2563eb', disabled: true },
   { id: 'data', label: 'Data (TBD)', color: '#14b8a6', disabled: true },
