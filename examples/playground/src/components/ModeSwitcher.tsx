@@ -30,7 +30,7 @@ export function ModeSwitcher(): JSX.Element {
             to={`/${mode.id}`}
             className="mode-link"
             style={{
-              borderColor: active ? mode.color : 'transparent',
+              borderColor: 'transparent',
               background: active ? `${mode.color}22` : 'transparent',
             }}
           >

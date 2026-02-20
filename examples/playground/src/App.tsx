@@ -15,7 +15,8 @@ export default function App(): JSX.Element {
         <ModeSwitcher />
       </header>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<Navigate to="/lab" replace />} />
+        <Route path="/home" element={<LandingPage />} />
         <Route path="/pro" element={<CategoryPage />} />
         <Route path="/data" element={<CategoryPage />} />
         <Route path="/pro/:demoId" element={<DemoPage />} />
