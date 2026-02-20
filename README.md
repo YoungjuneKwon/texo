@@ -41,6 +41,24 @@ graph LR
 
 ## Usage Preview
 
+## Install (npm)
+
+Install Texo packages from npm:
+
+```bash
+npm install @texo-ui/core
+```
+
+Related packages:
+
+```bash
+npm install @texo-ui/react @texo-ui/kit
+```
+
+Package reference:
+
+- `@texo-ui/core`: https://www.npmjs.com/package/@texo-ui/core
+
 ### 1. The Protocol (LLM Output)
 The LLM generates standard Markdown mixed with **UI Directives**:
 
