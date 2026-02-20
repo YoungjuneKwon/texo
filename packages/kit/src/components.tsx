@@ -90,16 +90,15 @@ function addDaysISO(value: string, days: number): string {
 }
 
 export function TexoStack(props: Record<string, unknown>): React.ReactElement {
-  const direction = props.direction === 'row' ? 'row' : 'column';
-  const gap = asNumber(props.gap, 10);
   const title = asString(props.title);
+
+  if (!title) {
+    return <></>;
+  }
 
   return (
     <section style={shellStyle}>
       {title ? <h3 style={{ margin: 0, marginBottom: 10 }}>{title}</h3> : null}
-      <p style={{ margin: 0, color: 'var(--texo-theme-muted, #6b7280)' }}>
-        Layout: {direction} / gap {gap}
-      </p>
     </section>
   );
 }
