@@ -37,10 +37,24 @@ function asRecordArray(value: unknown): Array<Record<string, unknown>> {
     : [];
 }
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 interface ChartSeries {
   name: string;
   values: number[];
 }
+
+type SvgShapeType =
+  | 'rect'
+  | 'circle'
+  | 'ellipse'
+  | 'line'
+  | 'path'
+  | 'polyline'
+  | 'polygon'
+  | 'text';
 
 function parseChartSeries(value: unknown): ChartSeries[] {
   if (!Array.isArray(value)) {
@@ -66,6 +80,52 @@ function parseChartSeries(value: unknown): ChartSeries[] {
       };
     })
     .filter((series) => series.values.length > 0);
+}
+
+function normalizeSvgAttrKey(key: string): string {
+  return key.replace(/-([a-z])/g, (_, alpha: string) => alpha.toUpperCase());
+}
+
+function toSvgPropValue(value: unknown): string | number | boolean | undefined {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  return undefined;
+}
+
+function parseSvgShapeType(value: unknown): SvgShapeType | null {
+  if (value === 'rect' || value === 'circle' || value === 'ellipse' || value === 'line') {
+    return value;
+  }
+  if (value === 'path' || value === 'polyline' || value === 'polygon' || value === 'text') {
+    return value;
+  }
+  return null;
+}
+
+function renderSvgShape(shape: Record<string, unknown>, index: number): React.ReactNode {
+  const shapeType = parseSvgShapeType(shape.type);
+  if (!shapeType) {
+    return null;
+  }
+
+  const rawAttributes: Record<string, unknown> = isObject(shape.attrs) ? shape.attrs : shape;
+  const attrs: Record<string, string | number | boolean> = { key: `shape-${index}` };
+  Object.entries(rawAttributes).forEach(([key, value]) => {
+    if (key === 'type' || key === 'attrs' || key === 'text') {
+      return;
+    }
+    const parsed = toSvgPropValue(value);
+    if (parsed === undefined) {
+      return;
+    }
+    attrs[normalizeSvgAttrKey(key)] = parsed;
+  });
+
+  if (shapeType === 'text') {
+    return React.createElement('text', attrs, asString(shape.text));
+  }
+  return React.createElement(shapeType, attrs);
 }
 
 function parseISODate(value: string): Date | null {
@@ -131,6 +191,65 @@ export function TexoGrid(props: Record<string, unknown>): React.ReactElement {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+export function TexoRect(props: Record<string, unknown>): React.ReactElement {
+  const width = Math.max(40, asNumber(props.width, 220));
+  const height = Math.max(24, asNumber(props.height, 120));
+  const radius = Math.max(0, asNumber(props.radius, 8));
+  const fill = asString(props.fill, 'var(--texo-theme-accent, #2563eb)');
+  const stroke = asString(props.stroke, 'var(--texo-theme-line, #1e293b)');
+  const strokeWidth = Math.max(0, asNumber(props.strokeWidth, 1));
+
+  return (
+    <section style={shellStyle}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ width: '100%', maxWidth: `${width}px`, display: 'block' }}
+        role="img"
+        aria-label="Rectangle"
+      >
+        <rect
+          x={strokeWidth / 2}
+          y={strokeWidth / 2}
+          width={Math.max(0, width - strokeWidth)}
+          height={Math.max(0, height - strokeWidth)}
+          rx={radius}
+          ry={radius}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={strokeWidth}
+        />
+      </svg>
+    </section>
+  );
+}
+
+export function TexoSvg(props: Record<string, unknown>): React.ReactElement {
+  const width = Math.max(40, asNumber(props.width, 320));
+  const height = Math.max(24, asNumber(props.height, 180));
+  const viewBox = asString(props.viewBox, `0 0 ${width} ${height}`);
+  const background = asString(props.background);
+  const shapes = asRecordArray(props.shapes);
+
+  return (
+    <section style={shellStyle}>
+      <svg
+        viewBox={viewBox}
+        style={{
+          width: '100%',
+          maxWidth: `${width}px`,
+          minHeight: `${height}px`,
+          display: 'block',
+        }}
+        role="img"
+        aria-label="SVG"
+      >
+        {background ? <rect x={0} y={0} width="100%" height="100%" fill={background} /> : null}
+        {shapes.map((shape, index) => renderSvgShape(shape, index))}
+      </svg>
     </section>
   );
 }

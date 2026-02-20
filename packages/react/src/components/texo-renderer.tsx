@@ -28,6 +28,7 @@ export interface TexoRendererProps {
   errorResetKeys?: readonly unknown[];
   trimLeadingTextBeforeDirective?: boolean;
   renderDirectivesOnly?: boolean;
+  showStreamingDirectives?: boolean;
   streamOptions?: UseTexoStreamOptions;
   className?: string;
   style?: React.CSSProperties;
@@ -120,7 +121,13 @@ export function TexoRenderer(props: TexoRendererProps): React.ReactElement {
     >
       <TexoContext.Provider value={{ registry, dispatch }}>
         <div className={props.className} style={props.style}>
-          {reconcile(renderAST, registry, props.fallback, props.renderDirectivesOnly)}
+          {reconcile(
+            renderAST,
+            registry,
+            props.fallback,
+            props.renderDirectivesOnly,
+            props.showStreamingDirectives,
+          )}
         </div>
       </TexoContext.Provider>
     </TexoErrorBoundary>

@@ -22,7 +22,7 @@ interface GridEntry {
   rows: number;
   columns: number;
   cells: GridCellDef[];
-  mountedByCellId: Map<string, React.ReactNode[]>;
+  mountedByCellId: Map<string, MountedNodeEntry[]>;
   theme: ThemeTokens;
 }
 
@@ -30,6 +30,12 @@ interface NodeEntry {
   kind: 'node';
   key: string;
   node: React.ReactNode;
+}
+
+interface MountedNodeEntry {
+  key: string;
+  node: React.ReactNode;
+  uiId?: string;
 }
 
 type RootEntry = GridEntry | NodeEntry;
@@ -297,7 +303,9 @@ function renderGridEntry(entry: GridEntry): React.ReactNode {
               minWidth: 0,
             }}
           >
-            {mounted}
+            {mounted.map((item) => (
+              <React.Fragment key={item.key}>{item.node}</React.Fragment>
+            ))}
           </div>
         );
       })}
@@ -310,10 +318,13 @@ function renderRootWithMounting(
   registry: ComponentRegistry,
   fallback?: React.ComponentType<FallbackProps>,
   directivesOnly?: boolean,
+  showStreamingDirectives?: boolean,
 ): React.ReactNode {
   const entries: RootEntry[] = [];
   const gridById = new Map<string, GridEntry>();
   const cellToGrid = new Map<string, GridEntry>();
+  const rootNodeIndexByUiId = new Map<string, number>();
+  const mountedUiPlacement = new Map<string, { grid: GridEntry; cellId: string }>();
   const localThemeByMount = new Map<string, ThemeTokens>();
   const localThemeByGrid = new Map<string, ThemeTokens>();
 
@@ -330,12 +341,69 @@ function renderRootWithMounting(
     return theme;
   };
 
+  const reindexRootUiMapFrom = (start: number): void => {
+    if (start < 0) {
+      return;
+    }
+    for (let index = start; index < entries.length; index += 1) {
+      const entry = entries[index];
+      if (entry.kind !== 'node') {
+        continue;
+      }
+      for (const [uiId, mappedIndex] of rootNodeIndexByUiId.entries()) {
+        if (mappedIndex === index) {
+          rootNodeIndexByUiId.set(uiId, index);
+        }
+      }
+    }
+  };
+
+  const removeRootNodeByUiId = (uiId: string): void => {
+    const index = rootNodeIndexByUiId.get(uiId);
+    if (index === undefined) {
+      return;
+    }
+    entries.splice(index, 1);
+    rootNodeIndexByUiId.delete(uiId);
+    for (const [key, mappedIndex] of rootNodeIndexByUiId.entries()) {
+      if (mappedIndex > index) {
+        rootNodeIndexByUiId.set(key, mappedIndex - 1);
+      }
+    }
+  };
+
+  const removeMountedNodeByUiId = (uiId: string): void => {
+    const placement = mountedUiPlacement.get(uiId);
+    if (!placement) {
+      return;
+    }
+    const current = placement.grid.mountedByCellId.get(placement.cellId) ?? [];
+    placement.grid.mountedByCellId.set(
+      placement.cellId,
+      current.filter((item) => item.uiId !== uiId),
+    );
+    mountedUiPlacement.delete(uiId);
+  };
+
+  const clearExistingUiPlacement = (uiId?: string): void => {
+    if (!uiId) {
+      return;
+    }
+    removeRootNodeByUiId(uiId);
+    removeMountedNodeByUiId(uiId);
+  };
+
   ast.children.forEach((node) => {
     if (node.type === 'newline') {
       return;
     }
 
     if (directivesOnly && !isDirectiveNode(node)) {
+      return;
+    }
+
+    if (isDirectiveNode(node) && node.status === 'streaming' && !showStreamingDirectives) {
+      consumePendingTheme();
       return;
     }
 
@@ -375,7 +443,7 @@ function renderRootWithMounting(
       const columns = asNumber(node.attributes.columns, 2);
       const gridId = asString(node.attributes.id) ?? `grid-${gridCount}`;
       const cells = parseGridCells(node.attributes, rows, columns);
-      const mountedByCellId = new Map<string, React.ReactNode[]>();
+      const mountedByCellId = new Map<string, MountedNodeEntry[]>();
       cells.forEach((cell) => {
         mountedByCellId.set(cell.id, []);
       });
@@ -409,6 +477,8 @@ function renderRootWithMounting(
       }
 
       const mountTarget = asString(node.attributes.mount);
+      const uiId = asString(node.attributes.id);
+      clearExistingUiPlacement(uiId);
       const nextTheme = mergeTheme(
         consumePendingTheme(),
         mountTarget ? (localThemeByMount.get(mountTarget) ?? {}) : {},
@@ -425,8 +495,11 @@ function renderRootWithMounting(
         if (directGrid && directGrid.cells.length > 0) {
           const firstCell = directGrid.cells[0].id;
           const mounted = directGrid.mountedByCellId.get(firstCell) ?? [];
-          mounted.push(renderedDirective);
+          mounted.push({ key: node.id, node: renderedDirective, uiId });
           directGrid.mountedByCellId.set(firstCell, mounted);
+          if (uiId) {
+            mountedUiPlacement.set(uiId, { grid: directGrid, cellId: firstCell });
+          }
           return;
         }
 
@@ -434,13 +507,19 @@ function renderRootWithMounting(
         if (mountedGrid) {
           const cellId = mountTarget.includes(':') ? mountTarget.split(':')[1] : mountTarget;
           const mounted = mountedGrid.mountedByCellId.get(cellId) ?? [];
-          mounted.push(renderedDirective);
+          mounted.push({ key: node.id, node: renderedDirective, uiId });
           mountedGrid.mountedByCellId.set(cellId, mounted);
+          if (uiId) {
+            mountedUiPlacement.set(uiId, { grid: mountedGrid, cellId });
+          }
           return;
         }
       }
 
       entries.push({ kind: 'node', key: node.id, node: renderedDirective });
+      if (uiId) {
+        rootNodeIndexByUiId.set(uiId, entries.length - 1);
+      }
       return;
     }
 
@@ -470,6 +549,7 @@ export function reconcile(
   registry: ComponentRegistry,
   fallback?: React.ComponentType<FallbackProps>,
   directivesOnly?: boolean,
+  showStreamingDirectives?: boolean,
 ): React.ReactNode {
-  return renderRootWithMounting(ast, registry, fallback, directivesOnly);
+  return renderRootWithMounting(ast, registry, fallback, directivesOnly, showStreamingDirectives);
 }

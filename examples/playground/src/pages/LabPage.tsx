@@ -142,6 +142,7 @@ export function LabPage(): JSX.Element {
 
   const provider = plannerProviders[providerId];
   const casualExamples = useMemo(() => scenariosByCategory('casual'), []);
+  const showProgressRendering = useMemo(() => prompt.includes('과정 표시'), [prompt]);
 
   const providerModelOptions = useMemo<ProviderModelOption[]>(() => {
     const byProvider = { ...modelOptionsByProvider };
@@ -182,6 +183,8 @@ export function LabPage(): JSX.Element {
       'When using texo-grid, always declare rows/columns and explicit cells with unique id values.',
       'For cell coordinates, prefer 1-based row/column values.',
       'Place components into grid cells with optional mount field instead of nesting as grid children.',
+      'For incremental updates, assign stable id values to directives and reuse the same id to replace existing UI blocks.',
+      'Default behavior is finalized rendering: avoid relying on partially open directives for preview unless user explicitly asks "과정 표시".',
       'Support theming with texo-theme using scope: global/local and token keys (background, foreground, accent, line, radius, border, paddingY, paddingX, shadow).',
       'Prefer texo-theme preset names first, then override only needed tokens.',
       'For calculator/keypad screens prefer texo-button stylePreset: wide or raised.',
@@ -364,6 +367,7 @@ export function LabPage(): JSX.Element {
     setEditableStreamText('');
     setRenderStreamText('');
     setIsGenerating(true);
+    let nextStream = '';
 
     try {
       if (provider.requiresApiKey && !apiKey.trim()) {
@@ -380,11 +384,15 @@ export function LabPage(): JSX.Element {
         componentDocs,
         extraRules: sharedRules,
         onText: (chunk) => {
+          nextStream += chunk;
           setStreamTextValue((prev) => prev + chunk);
           setEditableStreamText((prev) => prev + chunk);
-          setRenderStreamText((prev) => prev + chunk);
+          if (showProgressRendering) {
+            setRenderStreamText((prev) => prev + chunk);
+          }
         },
       });
+      setRenderStreamText(nextStream);
     } catch (error) {
       const message =
         error instanceof DOMException && error.name === 'AbortError'
@@ -545,6 +553,7 @@ export function LabPage(): JSX.Element {
               registry={registry}
               trimLeadingTextBeforeDirective
               renderDirectivesOnly
+              showStreamingDirectives={showProgressRendering}
               onAction={(action) => setActions((prev) => [...prev, action])}
               onError={(event) => setRecoveryEvents((prev) => [...prev, event])}
             />

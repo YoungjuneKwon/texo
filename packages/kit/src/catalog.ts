@@ -107,4 +107,36 @@ export const BUILTIN_COMPONENT_CATALOG: CatalogComponent[] = [
     example:
       '::: texo-chart\nchartType: "line"\nxAxisMode: "date"\nxEditable: true\nstartDate: "2026-02-01"\nrangeStartDate: "2026-02-05"\nrangeEndDate: "2026-02-20"\ndayStep: 1\nlabels: ["1", "2", "3"]\nseries:\n  - name: "Sales"\n    values: [12, 18, 16]\n:::',
   },
+  {
+    name: 'texo-rect',
+    summary: 'Draw a simple rectangle block using SVG.',
+    props: [
+      { name: 'width', type: 'number', description: 'Rectangle width in px.' },
+      { name: 'height', type: 'number', description: 'Rectangle height in px.' },
+      { name: 'radius', type: 'number', description: 'Corner radius.' },
+      { name: 'fill', type: 'string', description: 'Fill color.' },
+      { name: 'stroke', type: 'string', description: 'Border color.' },
+      { name: 'strokeWidth', type: 'number', description: 'Border thickness.' },
+    ],
+    example:
+      '::: texo-rect\nwidth: 240\nheight: 120\nradius: 12\nfill: "#1d4ed8"\nstroke: "#93c5fd"\nstrokeWidth: 2\n:::',
+  },
+  {
+    name: 'texo-svg',
+    summary: 'Render custom SVG shapes from a declarative list.',
+    props: [
+      { name: 'width', type: 'number', description: 'Rendered max width in px.' },
+      { name: 'height', type: 'number', description: 'Rendered minimum height in px.' },
+      { name: 'viewBox', type: 'string', description: 'SVG viewBox value.' },
+      { name: 'background', type: 'string', description: 'Optional background fill.' },
+      {
+        name: 'shapes',
+        type: 'Array<{type:string,...attrs}>',
+        required: true,
+        description: 'Supported types: rect,circle,ellipse,line,path,polyline,polygon,text.',
+      },
+    ],
+    example:
+      '::: texo-svg\nwidth: 320\nheight: 180\nviewBox: "0 0 320 180"\nshapes:\n  - type: "rect"\n    x: 20\n    y: 20\n    width: 120\n    height: 80\n    rx: 10\n    fill: "#0ea5e9"\n  - type: "text"\n    x: 28\n    y: 66\n    fill: "#ffffff"\n    font-size: 14\n    text: "Hello SVG"\n:::',
+  },
 ];
