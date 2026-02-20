@@ -526,14 +526,16 @@ export function LabPage(): JSX.Element {
 
         <article className="panel lab-render-panel">
           <h3>Rendered UI</h3>
-          <TexoRenderer
-            content={renderStreamText}
-            registry={registry}
-            trimLeadingTextBeforeDirective
-            renderDirectivesOnly
-            onAction={(action) => setActions((prev) => [...prev, action])}
-            onError={(event) => setRecoveryEvents((prev) => [...prev, event])}
-          />
+          <div className="lab-render-content">
+            <TexoRenderer
+              content={renderStreamText}
+              registry={registry}
+              trimLeadingTextBeforeDirective
+              renderDirectivesOnly
+              onAction={(action) => setActions((prev) => [...prev, action])}
+              onError={(event) => setRecoveryEvents((prev) => [...prev, event])}
+            />
+          </div>
         </article>
       </div>
 

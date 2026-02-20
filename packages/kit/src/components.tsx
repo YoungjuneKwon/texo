@@ -194,6 +194,7 @@ export function TexoButton(props: Record<string, unknown>): React.ReactElement {
       style={{
         borderRadius: 'var(--texo-theme-radius, 10px)',
         padding: '8px 12px',
+        margin: 'var(--texo-theme-button-margin, 4px 0)',
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box',

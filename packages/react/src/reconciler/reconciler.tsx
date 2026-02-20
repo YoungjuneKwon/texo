@@ -146,9 +146,6 @@ function themeToStyle(tokens: ThemeTokens): React.CSSProperties {
     style[`--texo-theme-${key}`] = value;
   });
 
-  if (tokens.background) {
-    style.background = tokens.background;
-  }
   if (tokens.foreground) {
     style.color = tokens.foreground;
   }
@@ -259,6 +256,17 @@ function renderNode(
       {children}
     </Renderer>
   );
+}
+
+function shouldRenderDirectiveNode(
+  node: DirectiveNode,
+  registry: ComponentRegistry,
+  directivesOnly?: boolean,
+): boolean {
+  if (!directivesOnly) {
+    return true;
+  }
+  return registry.get(node.name) !== undefined;
 }
 
 function renderGridEntry(entry: GridEntry): React.ReactNode {
@@ -395,6 +403,11 @@ function renderRootWithMounting(
     }
 
     if (isDirectiveNode(node)) {
+      if (!shouldRenderDirectiveNode(node, registry, directivesOnly)) {
+        consumePendingTheme();
+        return;
+      }
+
       const mountTarget = asString(node.attributes.mount);
       const nextTheme = mergeTheme(
         consumePendingTheme(),
