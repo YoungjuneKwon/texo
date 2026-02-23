@@ -14,6 +14,7 @@ import {
   getKnownProviderModels,
   plannerProviders,
   resolveProviderModels,
+  type PlannerMessage,
   type PlannerProviderId,
 } from '../utils/planner-providers';
 import { scenariosByCategory } from '../scenarios';
@@ -36,6 +37,62 @@ interface ProviderModelOption {
 }
 
 type LabBottomTabId = 'stream' | 'examples' | 'system-prompt' | 'catalog' | 'log';
+
+function asObjectRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null;
+}
+
+function asText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+function buildInteractionUserEventMessage(action: TexoAction): string {
+  const value = asObjectRecord(action.value);
+  const directive = action.directive;
+  const componentId = value ? asText(value.componentId) : null;
+  const idSuffix = componentId ? ` (id: ${componentId})` : '';
+
+  if (directive === 'button') {
+    const label = value ? asText(value.label) : null;
+    const actionId = value ? asText(value.action) : null;
+    return `User clicked button ${label ? `"${label}"` : '(no label)'}${actionId ? ` [action=${actionId}]` : ''}${idSuffix}.`;
+  }
+
+  if (directive === 'checkbox') {
+    const label = value ? asText(value.label) : null;
+    const checked = value && typeof value.checked === 'boolean' ? value.checked : null;
+    const stateText = checked === null ? 'changed' : checked ? 'checked' : 'unchecked';
+    return `User ${stateText} checkbox ${label ? `"${label}"` : '(no label)'}${idSuffix}.`;
+  }
+
+  if (directive === 'radio') {
+    const label = value ? asText(value.label) : null;
+    const selected =
+      value && typeof value.selected === 'boolean'
+        ? value.selected
+        : value && typeof value.checked === 'boolean'
+          ? value.checked
+          : null;
+    const stateText = selected === null ? 'changed' : selected ? 'selected' : 'cleared';
+    return `User ${stateText} radio option ${label ? `"${label}"` : '(no label)'}${idSuffix}.`;
+  }
+
+  if (directive === 'input') {
+    const label = value ? asText(value.label) : null;
+    const name = value ? asText(value.name) : null;
+    const nextValue = value ? asText(value.value) : null;
+    return `User updated input ${label ? `"${label}"` : name ? `"${name}"` : '(unknown)'}${nextValue ? ` to "${nextValue}"` : ''}${idSuffix}.`;
+  }
+
+  return `User interacted with ${directive} control${idSuffix}. Event payload: ${JSON.stringify(action.value)}`;
+}
+
+function createAssistantExcerpt(content: string, maxChars = 1600): string {
+  if (content.length <= maxChars) {
+    return content;
+  }
+  return content.slice(content.length - maxChars);
+}
 
 function readLabPreferences(): LabPreferences | null {
   if (typeof globalThis.localStorage === 'undefined') {
@@ -172,6 +229,7 @@ function buildFocusedInteractionContext(stream: string, componentId?: string): s
 
 export function LabPage(): JSX.Element {
   const registry = useMemo(() => createRegistry(createBuiltInComponents()), []);
+  const assistantHistoryRef = useRef<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const actionAbortRef = useRef<AbortController | null>(null);
   const pageRef = useRef<HTMLElement | null>(null);
@@ -260,13 +318,17 @@ export function LabPage(): JSX.Element {
       'When using grid, always declare id/rows/columns; omit full cells list unless span overrides are needed.',
       'If no cells are provided, mounts should target auto cell ids in <grid-id>/<row>:<col> form.',
       'For span overrides, prefer compact cells entries using at:"row:col" and span:"rowSpanxcolSpan".',
+      'If the layout has main/side/header/table/chart regions, explicitly define cells for those regions and include span values (do not skip span).',
+      'Before mounting to a named cell id, declare that cell id in grid cells with explicit at/span so geometry is deterministic.',
       'For dashboard layouts, assign dedicated span cells for filter/header/main chart/side chart/table sections.',
       'Component header can include optional size and color tokens, e.g. button 100x50 red.',
       'For cell coordinates, prefer 1-based row/column values.',
       'Place components into grid cells with optional mount field instead of nesting as grid children.',
+      'You can mount multiple directives to the same grid cell and swap that area by returning updated directives (same id) after button interactions.',
       'For incremental updates, assign stable id values to directives and reuse the same id to replace existing UI blocks.',
       'For interaction-driven updates, include id on each returned directive so exact components are updated.',
       'Default behavior is finalized rendering: avoid relying on partially open directives for preview unless user explicitly asks "과정 표시".',
+      'Use label with text for simple non-interactive text blocks such as captions, helper messages, or inline status.',
       'Support theming with theme using scope: global/local and token keys (background, foreground, accent, line, radius, border, paddingY, paddingX, shadow).',
       'Prefer theme preset names first, then override only needed tokens.',
       'For calculator/keypad screens prefer button stylePreset: wide or raised.',
@@ -447,6 +509,10 @@ export function LabPage(): JSX.Element {
   };
 
   const runInteractionUpdate = async (action: TexoAction): Promise<void> => {
+    if (isHandlingAction) {
+      return;
+    }
+
     if (provider.requiresApiKey && !apiKey.trim()) {
       setErrors((prev) => [
         ...prev,
@@ -471,6 +537,19 @@ export function LabPage(): JSX.Element {
         : undefined;
     const targetComponentId = typeof componentId === 'string' ? componentId : undefined;
     const focusedContext = buildFocusedInteractionContext(streamTextValue, targetComponentId);
+    const interactionEventMessage = buildInteractionUserEventMessage(action);
+    const latestAssistantText =
+      assistantHistoryRef.current.length > 0
+        ? assistantHistoryRef.current[assistantHistoryRef.current.length - 1]
+        : streamTextValue;
+    const priorMessages: PlannerMessage[] = [];
+    if (latestAssistantText.trim().length > 0) {
+      priorMessages.push({
+        role: 'assistant',
+        content: createAssistantExcerpt(latestAssistantText),
+      });
+    }
+    priorMessages.push({ role: 'user', content: interactionEventMessage });
 
     const interactionPrompt = [
       'You are handling a UI interaction event for an existing rendered UI.',
@@ -489,13 +568,14 @@ export function LabPage(): JSX.Element {
     let prependedGap = false;
 
     try {
-      await provider.generateTexoStreamText({
+      const interactionResult = await provider.generateTexoStreamText({
         prompt: interactionPrompt,
         model: model.trim() || provider.defaultModel,
         apiKey: apiKey.trim() || undefined,
         baseUrl: baseUrl.trim() || undefined,
         signal: abortController.signal,
         componentDocs,
+        priorMessages,
         extraRules: [
           ...sharedRules,
           'This is an interaction update request, not a full UI generation.',
@@ -518,6 +598,9 @@ export function LabPage(): JSX.Element {
           setRenderStreamText((prev) => appendChunk(prev));
         },
       });
+      if (interactionResult.trim().length > 0) {
+        assistantHistoryRef.current = [...assistantHistoryRef.current.slice(-7), interactionResult];
+      }
     } catch (error) {
       const message =
         error instanceof DOMException && error.name === 'AbortError'
@@ -546,6 +629,7 @@ export function LabPage(): JSX.Element {
     setEditableStreamText('');
     setRenderStreamText('');
     setIsGenerating(true);
+    assistantHistoryRef.current = [];
 
     try {
       if (provider.requiresApiKey && !apiKey.trim()) {
@@ -553,7 +637,7 @@ export function LabPage(): JSX.Element {
         return;
       }
 
-      await provider.generateTexoStreamText({
+      const generatedText = await provider.generateTexoStreamText({
         prompt,
         model: model.trim() || provider.defaultModel,
         apiKey: apiKey.trim() || undefined,
@@ -567,6 +651,9 @@ export function LabPage(): JSX.Element {
           setRenderStreamText((prev) => prev + chunk);
         },
       });
+      if (generatedText.trim().length > 0) {
+        assistantHistoryRef.current = [generatedText];
+      }
     } catch (error) {
       const message =
         error instanceof DOMException && error.name === 'AbortError'
@@ -747,7 +834,7 @@ export function LabPage(): JSX.Element {
               showStreamingDirectives={showProgressRendering}
               onAction={(action) => {
                 setActions((prev) => [...prev, action]);
-                if (!isGenerating) {
+                if (!isGenerating && !isHandlingAction) {
                   void runInteractionUpdate(action);
                 }
               }}

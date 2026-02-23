@@ -417,6 +417,29 @@ export function TexoInput(props: Record<string, unknown>): React.ReactElement {
   );
 }
 
+export function TexoLabel(props: Record<string, unknown>): React.ReactElement {
+  const text = asString(props.text, asString(props.value));
+
+  if (!text) {
+    return <></>;
+  }
+
+  return (
+    <p
+      style={{
+        margin: '8px 0',
+        color: 'var(--texo-theme-foreground, var(--text, #e5e7eb))',
+        fontSize: '18px',
+        fontWeight: 700,
+        textAlign: 'center',
+        lineHeight: 1.45,
+      }}
+    >
+      {text}
+    </p>
+  );
+}
+
 export function TexoTable(props: Record<string, unknown>): React.ReactElement {
   const columns = asStringArray(props.columns);
   const rows = asRecordArray(props.rows);

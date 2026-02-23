@@ -43,6 +43,19 @@ export const BUILTIN_COMPONENT_CATALOG: CatalogComponent[] = [
     example: ':> input\n - label: "Email"\n - name: "email"\n - inputType: "email"',
   },
   {
+    name: 'label',
+    summary: 'Plain text output for captions, helper copy, or status messages.',
+    props: [
+      {
+        name: 'text',
+        type: 'string',
+        required: true,
+        description: 'Text content to render.',
+      },
+    ],
+    example: ':> label\n - text: "Last sync: 2 minutes ago"',
+  },
+  {
     name: 'checkbox',
     summary: 'Checkbox input that emits toggle action events.',
     props: [

@@ -4,6 +4,11 @@ import { generateMockIntentPlan } from './mock-llm-planner';
 
 export type PlannerProviderId = 'mock' | 'openai' | 'anthropic' | 'deepseek';
 
+export interface PlannerMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface PlannerRequest {
   prompt: string;
   model: string;
@@ -11,6 +16,7 @@ export interface PlannerRequest {
   baseUrl?: string;
   signal?: AbortSignal;
   componentDocs: TexoComponentDoc[];
+  priorMessages?: PlannerMessage[];
   extraRules?: string[];
   onText: (chunk: string) => void;
 }
@@ -138,6 +144,25 @@ function buildSystemPrompt(request: PlannerRequest): string {
   });
 }
 
+function composeMessagesWithPrompt(request: PlannerRequest): PlannerMessage[] {
+  const base = [...(request.priorMessages ?? [])];
+  if (base.length === 0) {
+    return [{ role: 'user', content: request.prompt }];
+  }
+
+  const last = base[base.length - 1];
+  if (last.role === 'user') {
+    base[base.length - 1] = {
+      role: 'user',
+      content: `${last.content}\n\n${request.prompt}`,
+    };
+    return base;
+  }
+
+  base.push({ role: 'user', content: request.prompt });
+  return base;
+}
+
 async function readSSEText(
   stream: ReadableStream<Uint8Array>,
   onEvent: (json: Record<string, unknown>) => string | null,
@@ -230,7 +255,7 @@ const openAIProvider: PlannerProvider = {
         stream: true,
         messages: [
           { role: 'system', content: buildSystemPrompt(request) },
-          { role: 'user', content: request.prompt },
+          ...composeMessagesWithPrompt(request),
         ],
       }),
     });
@@ -277,7 +302,7 @@ const anthropicProvider: PlannerProvider = {
         temperature: 0,
         stream: true,
         system: buildSystemPrompt(request),
-        messages: [{ role: 'user', content: request.prompt }],
+        messages: composeMessagesWithPrompt(request),
       }),
     });
 
@@ -320,7 +345,7 @@ const deepSeekProvider: PlannerProvider = {
         stream: true,
         messages: [
           { role: 'system', content: buildSystemPrompt(request) },
-          { role: 'user', content: request.prompt },
+          ...composeMessagesWithPrompt(request),
         ],
       }),
     });

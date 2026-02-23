@@ -138,9 +138,13 @@ export const TEXO_STREAM_PRIMER = [
   '- For simple grids, avoid listing every cell to reduce stream size and latency.',
   '- Add cells only when span override is required for specific coordinates.',
   '- Prefer compact span overrides: cells: [{ id, at: "<row>:<col>", span: "<rowSpan>x<colSpan>" }].',
+  '- When a layout has primary/secondary areas (header, main, sidebar, table, chart zone), explicitly declare those cells with span values; do not omit span for those key regions.',
+  '- Before using mount with a named cell id, ensure that cell id is declared in cells with its intended at/span.',
+  '- If any section is described as wide, large, full-width, hero, sidebar, or split-pane, reflect it via explicit span (not just by mount order).',
   '- Mount large sections to span cells (for example chart/table areas) instead of stacking many widgets into one small cell.',
   '- Prefer 1-based row/column coordinates for cells (renderer also normalizes 0-based input).',
   '- Any component can optionally set mount: "<cell-id>" or mount: "<grid-id>:<cell-id>".',
+  '- Multiple directives may share the same mount cell; newer directives with the same id can replace prior UI in that same region for view switching.',
   '- Components can set id: "<stable-id>" to support in-place updates later in the same stream.',
   '- If id is omitted, parser auto-assigns an id so interactive events can still target the component.',
   '- When updating an existing UI block, reuse the same id so renderer replaces the prior block instead of appending.',
@@ -161,6 +165,9 @@ export const TEXO_STREAM_PRIMER = [
   '- To allow x-axis switching, set xEditable: true and provide xAxisMode/date options.',
   '- xAxisMode supports label | index | date; with date mode use startDate/dayStep and optional rangeStartDate/rangeEndDate.',
   '- For comparison pie charts, create a second chart with chartType: "pie" using each series last value.',
+  'Label protocol:',
+  '- Use label for plain static text such as captions, hints, or status lines.',
+  '- label expects text: "..." and should not be used as an interactive control.',
 ].join('\n');
 
 function formatComponentDocs(components: TexoComponentDoc[]): string {
